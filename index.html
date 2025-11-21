@@ -1132,10 +1132,10 @@
         <div id="entry-view" class="w-full h-screen flex flex-col items-center justify-center p-4">
             <!-- 建置說明按鈕 -->
             <div class="absolute top-4 right-4 z-10">
-                <a href="https://filedn.com/laMtL9jmKf7JrDEQG0A6OPy/html/%E5%89%9B%E5%A5%BD%E5%AD%B8%E6%9C%80%E6%96%B0%E7%89%88-%E5%BB%BA%E7%BD%AE%E6%89%8B%E5%86%8A/%E5%89%9B%E5%A5%BD%E5%AD%B8%E6%95%99%E5%B8%AB%E4%BD%BF%E7%94%A8%E5%BB%BA%E7%BD%AE%E6%89%8B%E5%86%8ANew.html" target="_blank" rel="noopener noreferrer" 
+                <a href="https://youtu.be/ZAXIZZckc5g" target="_blank" rel="noopener noreferrer" 
                    class="inline-flex items-center px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded-lg shadow-md transition-all duration-200 hover:shadow-lg">
                     <i class="fas fa-play-circle mr-2"></i>
-                    建置操作手冊
+                    建置說明
                 </a>
             </div>
             
@@ -2228,15 +2228,10 @@
             ? JSON.parse(__firebase_config) 
             : {
   apiKey: "AIzaSyClIBRCqV2FXrdOCML1nnVGvRfY828qQyk",
-
   authDomain: "classroom-tool-1141011.firebaseapp.com",
-
   projectId: "classroom-tool-1141011",
-
   storageBucket: "classroom-tool-1141011.firebasestorage.app",
-
   messagingSenderId: "23321250273",
-
   appId: "1:23321250273:web:aed9c97e78a592046c2aa0"
 };
 
@@ -5106,15 +5101,15 @@
                     const parsedSettings = JSON.parse(savedSettings);
                     if (parsedSettings.aiSource) aiSettings.aiSource = parsedSettings.aiSource;
                     // MODIFIED: If geminiApiKey is empty after loading, set default.
-                    aiSettings.geminiApiKey = parsedSettings.geminiApiKey || 'AIzaSyBrVKhaUXzUCdfGCGixLlivPuhyOiKDFE0'; 
+                    aiSettings.geminiApiKey = parsedSettings.geminiApiKey || '12345678'; 
                 } catch (e) {
                     console.error("Failed to parse AI settings from localStorage:", e);
                     // If parsing fails, set default API key
-                    aiSettings.geminiApiKey = 'AIzaSyBrVKhaUXzUCdfGCGixLlivPuhyOiKDFE0';
+                    aiSettings.geminiApiKey = '12345678';
                 }
             } else {
                 // If no settings are saved at all, set default API key
-                aiSettings.geminiApiKey = 'AIzaSyBrVKhaUXzUCdfGCGixLlivPuhyOiKDFE0';
+                aiSettings.geminiApiKey = '12345678';
             }
         }
 
