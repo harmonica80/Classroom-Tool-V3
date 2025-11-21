@@ -1,2 +1,2 @@
-# Classroom-Tool-V2.5
-剛好學 V2.5 - Deployed by EZPage
+# Classroom-Tool-V3
+剛好學 V3 - Deployed by EZPage
