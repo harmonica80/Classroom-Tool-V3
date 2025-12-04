@@ -65,7 +65,7 @@
         }
         /* 隱藏元素的通用 class */
         .hidden {
-            display: none;
+            display: none !important;
         }
         /* 按鈕樣式 (直接在 HTML 中使用 Tailwind class，不使用 @apply) */
         .btn {
@@ -1129,6 +1129,156 @@
         .matching-line.incorrect {
             stroke: #ef4444;
         }
+
+        /* Reading Comprehension - Highlighter Styles */
+        .highlighter-btn {
+            cursor: pointer;
+            transition: all 0.2s ease;
+            position: relative;
+        }
+        .highlighter-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 0 8px rgba(0, 0, 0, 0.3);
+        }
+        .highlighter-btn.active {
+            border-color: #374151 !important;
+            border-width: 3px;
+            box-shadow: 0 0 12px rgba(59, 130, 246, 0.5);
+        }
+        .highlighter-btn.active::after {
+            content: '✓';
+            position: absolute;
+            bottom: -2px;
+            right: -2px;
+            background-color: #374151;
+            color: white;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+        }
+        #eraser-btn:hover, #reading-eraser-btn:hover {
+            background-color: #f3f4f6;
+            transform: scale(1.1);
+        }
+        #eraser-btn.active, #reading-eraser-btn.active {
+            background-color: #374151;
+            border-color: #374151;
+            border-width: 3px;
+            position: relative;
+        }
+        #eraser-btn.active i, #reading-eraser-btn.active i {
+            color: white;
+        }
+        #eraser-btn.active::after, #reading-eraser-btn.active::after {
+            content: '✓';
+            position: absolute;
+            bottom: -2px;
+            right: -2px;
+            background-color: #374151;
+            color: white;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            font-size: 10px;
+            line-height: 16px;
+            text-align: center;
+        }
+
+        /* Highlighted text spans */
+        .highlight {
+            padding: 2px 0;
+            border-radius: 3px;
+            cursor: pointer;
+            position: relative;
+            transition: all 0.2s ease;
+        }
+        .highlight:hover {
+            opacity: 0.8;
+        }
+        .highlight.yellow {
+            background-color: rgba(254, 240, 138, 0.6);
+        }
+        .highlight.green {
+            background-color: rgba(134, 239, 172, 0.6);
+        }
+        .highlight.pink {
+            background-color: rgba(253, 164, 175, 0.6);
+        }
+        .highlight.blue {
+            background-color: rgba(147, 197, 253, 0.6);
+        }
+
+        /* Eraser mode cursor and hover effect */
+        #reading-text-display.eraser-mode {
+            cursor: pointer;
+        }
+        #reading-text-display.eraser-mode .highlight {
+            cursor: pointer;
+        }
+        #reading-text-display.eraser-mode .highlight:hover {
+            opacity: 0.5;
+            text-decoration: line-through;
+            box-shadow: 0 0 8px rgba(239, 68, 68, 0.5);
+        }
+
+        /* Reading comprehension question cards */
+        #reading-questions-container .question-card {
+            background: linear-gradient(to right, #f0fdf4, #ecfdf5);
+            border-left: 4px solid #10b981;
+            border-radius: 0.5rem;
+            padding: 1rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            transition: all 0.2s ease;
+        }
+        #reading-questions-container .question-card:hover {
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transform: translateX(4px);
+        }
+
+        /* Touch device optimizations */
+        #reading-text-display {
+            -webkit-user-select: text;
+            -moz-user-select: text;
+            -ms-user-select: text;
+            user-select: text;
+            -webkit-touch-callout: default;
+        }
+
+        /* Larger touch targets for highlighter buttons on mobile */
+        @media (hover: none) and (pointer: coarse) {
+            .highlighter-btn, #reading-eraser-btn {
+                min-width: 44px;
+                min-height: 44px;
+                touch-action: manipulation;
+            }
+
+            /* Improve touch feedback */
+            .highlighter-btn:active, #reading-eraser-btn:active {
+                transform: scale(0.95);
+                transition: transform 0.1s;
+            }
+
+            /* Make highlights easier to tap on touch devices */
+            .highlight {
+                padding: 4px 2px;
+                min-height: 24px;
+                display: inline-block;
+            }
+        }
+
+        /* Disable pull-to-refresh on iOS/iPadOS */
+        body {
+            overscroll-behavior-y: none;
+        }
+
+        #interaction-reading-comprehension {
+            overscroll-behavior: none;
+            -webkit-overflow-scrolling: touch;
+        }
     </style>
 </head>
 <body class="flex items-center justify-center min-h-screen">
@@ -1186,7 +1336,7 @@
                 <p class="text-xs">App ID: <span id="app-id-display"></span> &nbsp;&bull;&nbsp; User ID: <span id="user-id-display"></span></p>
                 <div class="mt-2">
                     <a href="https://kentxchang.blogspot.tw" target="_blank" rel="noopener noreferrer" class="made-by-text !bg-white/50 !text-indigo-600 hover:!bg-white">
-                       Made by 阿剛老師V3
+                       Made by 阿剛老師V3.1
                     </a>
                 </div>
             </div>
@@ -1426,20 +1576,55 @@
                     <i class="fas fa-paper-plane mr-2"></i> 送出錄音 ✉️
                 </button>
             </div>
-            <div id="interaction-reading-comprehension" class="hidden text-center p-4">
-                <h3 class="text-2xl font-bold text-center mb-4">閱讀測驗</h3>
-
-                <!-- 閱讀文本顯示 -->
-                <div class="max-w-4xl mx-auto mb-6">
-                    <div id="reading-text-display" class="bg-gray-50 p-6 rounded-lg border text-left text-base leading-relaxed whitespace-pre-wrap"></div>
+            <div id="interaction-reading-comprehension" class="hidden flex flex-col" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background-color: #f3f4f6; overflow: hidden; z-index: 50; padding: 1.5rem 0;">
+                <!-- 標題與送出按鈕 -->
+                <div class="flex items-center justify-center mb-4 relative flex-shrink-0" style="width: 96%; max-width: none; margin: 0 auto;">
+                    <h3 class="text-2xl font-bold text-gray-800">📖 閱讀測驗</h3>
+                    <button id="submit-reading-btn" class="btn btn-primary text-lg px-8 py-3 absolute right-0">
+                        <i class="fas fa-paper-plane mr-2"></i>送出答案 ✉️
+                    </button>
                 </div>
 
-                <!-- 題目顯示 -->
-                <div id="reading-questions-container" class="max-w-4xl mx-auto space-y-6">
-                    <!-- 題目將動態生成在這裡 -->
-                </div>
+                <!-- 左右二欄佈局 -->
+                <div class="flex flex-col lg:flex-row gap-6 mx-auto flex-1" style="width: 96%; max-width: none; min-height: 0;">
+                    <!-- 左欄：閱讀文本 -->
+                    <div class="w-full lg:w-1/2 flex flex-col" style="min-height: 0; overflow-x: hidden;">
+                        <div class="bg-white rounded-xl shadow-lg p-6 flex flex-col h-full" style="overflow-x: hidden;">
+                            <div class="flex items-center justify-between mb-4 flex-shrink-0">
+                                <h4 class="text-xl font-bold text-gray-800">
+                                    <i class="fas fa-book-open text-blue-500 mr-2"></i>閱讀文本
+                                </h4>
+                                <!-- 螢光筆工具列 -->
+                                <div class="flex gap-2 items-center">
+                                    <span class="text-sm text-gray-600 mr-2">螢光筆：</span>
+                                    <button class="highlighter-btn w-8 h-8 rounded border-2 border-gray-300" data-color="yellow" style="background-color: #fef08a;" title="黃色螢光筆"></button>
+                                    <button class="highlighter-btn w-8 h-8 rounded border-2 border-gray-300" data-color="green" style="background-color: #86efac;" title="綠色螢光筆"></button>
+                                    <button class="highlighter-btn w-8 h-8 rounded border-2 border-gray-300" data-color="pink" style="background-color: #fda4af;" title="粉色螢光筆"></button>
+                                    <button class="highlighter-btn w-8 h-8 rounded border-2 border-gray-300" data-color="blue" style="background-color: #93c5fd;" title="藍色螢光筆"></button>
+                                    <button id="reading-eraser-btn" class="w-8 h-8 rounded border-2 border-gray-300 bg-white flex items-center justify-center" title="橡皮擦">
+                                        <i class="fas fa-eraser text-gray-600"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div style="position: relative; flex: 1; min-height: 0; overflow-x: hidden;">
+                                <div id="reading-text-display" class="bg-gradient-to-br from-amber-50 to-orange-50 p-6 rounded-lg border-2 border-amber-200 text-left text-base leading-loose whitespace-pre-wrap overflow-y-auto h-full" style="overflow-x: hidden; width: 100%;"></div>
+                                <canvas id="reading-highlight-canvas" style="position: absolute; top: 0; left: 0; pointer-events: none; border-radius: 0.5rem;"></canvas>
+                            </div>
+                        </div>
+                    </div>
 
-                <button id="submit-reading-btn" class="btn btn-primary mt-6 max-w-sm mx-auto">送出答案 ✉️</button>
+                    <!-- 右欄：題目 -->
+                    <div class="w-full lg:w-1/2 flex flex-col" style="min-height: 0; overflow-x: hidden;">
+                        <div class="bg-white rounded-xl shadow-lg p-6 flex flex-col h-full" style="overflow-x: hidden;">
+                            <h4 class="text-xl font-bold text-gray-800 mb-4 flex-shrink-0">
+                                <i class="fas fa-clipboard-list text-green-500 mr-2"></i>題目
+                            </h4>
+                            <div id="reading-questions-container" class="space-y-6 overflow-y-auto flex-1" style="min-height: 0; overflow-x: hidden; width: 100%;">
+                                <!-- 題目將動態生成在這裡 -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
             <div id="interaction-quick-answer" class="hidden text-center flex flex-col items-center justify-center h-full min-h-screen p-4 relative">
                 <h3 class="text-2xl font-bold text-center mb-6">搶答題</h3>
@@ -2501,6 +2686,11 @@ appId: &quot;...&quot;"></textarea>
                 interactionUIs.url_dispatch.style.cssText = ''; // Reset container styles
              }
 
+             // Disable pull-to-refresh prevention when leaving reading comprehension mode
+             if (mode !== 'reading_comprehension') {
+                disablePullToRefreshPrevention();
+             }
+
              if (interactionUIs[mode]) {
                 interactionUIs[mode].classList.remove('hidden');
                 resetStudentUIState(mode, isResumingFromPause); // Pass the flag
@@ -2674,6 +2864,8 @@ appId: &quot;...&quot;"></textarea>
                         submitReadingBtn.classList.remove('btn-gray');
                         submitReadingBtn.classList.add('btn-primary');
                     }
+                    // Disable pull-to-refresh on iOS/iPadOS
+                    enablePullToRefreshPrevention();
                     break;
                 case 'quick_poll':
                     // Reset quick poll state
@@ -6302,6 +6494,9 @@ appId: &quot;...&quot;"></textarea>
                 await setInteractionMode('waiting');
                 lastSelectedStudentCard = null;
 
+                // Disable pull-to-refresh prevention when ending interaction
+                disablePullToRefreshPrevention();
+
                 // Clear sequencing and matching input fields
                 document.getElementById('sequencing-items-textarea').value = '';
                 document.getElementById('matching-pairs-textarea').value = '';
@@ -8027,17 +8222,17 @@ appId: &quot;...&quot;"></textarea>
             // 如果上述來源都沒有設定，才會使用這裡的值
             // ============================================================================
             firebaseConfig = {
-                apiKey: "AIzaSyClIBRCqV2FXrdOCML1nnVGvRfY828qQyk",
-  authDomain: "classroom-tool-1141011.firebaseapp.com",
-  projectId: "classroom-tool-1141011",
-  storageBucket: "classroom-tool-1141011.firebasestorage.app",
-  messagingSenderId: "23321250273",
-  appId: "1:23321250273:web:aed9c97e78a592046c2aa0"
+                apiKey: "AIzaSyCMAnLdftmZfUKkqMgxjcnjww_zC--ReNk",
+  authDomain: "classroom-tools-3653b.firebaseapp.com",
+  projectId: "classroom-tools-3653b",
+  storageBucket: "classroom-tools-3653b.firebasestorage.app",
+  messagingSenderId: "541251010637",
+  appId: "1:541251010637:web:f92bc8b94359a06c829c04"
             };
             // ============================================================================
 
-            // Check if this is a valid config (not demo)
-            if (firebaseConfig.apiKey !== "demo") {
+            // Check if this is a valid config (not demo or starts with demo)
+            if (firebaseConfig.apiKey !== "demo" && !firebaseConfig.apiKey.startsWith("demo")) {
                 try {
                     initializeFirebase();
                     isFirebaseConfigApplied = true;
@@ -9388,9 +9583,28 @@ appId: &quot;...&quot;"></textarea>
                 readingComprehensionData = readingData;
             }
 
-            textDisplay.textContent = readingData.text;
+            // Process text for highlighting - wrap in spans
+            textDisplay.innerHTML = '';
+            const text = readingData.text;
+            // Split text by sentences (keep whitespace structure)
+            const lines = text.split('\n');
+            lines.forEach((line, lineIndex) => {
+                if (line.trim()) {
+                    const lineSpan = document.createElement('span');
+                    lineSpan.textContent = line;
+                    lineSpan.dataset.lineIndex = lineIndex;
+                    textDisplay.appendChild(lineSpan);
+                }
+                if (lineIndex < lines.length - 1) {
+                    textDisplay.appendChild(document.createTextNode('\n'));
+                }
+            });
+
             questionsContainer.innerHTML = '';
             console.log('[displayReadingComprehensionForStudent] Set text:', readingData.text);
+
+            // Initialize highlighter after text is displayed
+            initializeHighlighter();
 
             // Determine which answers to restore
             let answersToRestore = [];
@@ -9431,20 +9645,35 @@ appId: &quot;...&quot;"></textarea>
 
             readingData.questions.forEach((q, index) => {
                 const questionDiv = document.createElement('div');
-                questionDiv.className = 'bg-white p-4 rounded-lg border';
+                questionDiv.className = 'question-card';
 
                 // Get answer for this question (if exists)
                 const selectedAnswer = answersToRestore[index] || 0;
 
+                // Difficulty badge
+                const levelBadge = q.level ? `<span class="inline-block px-2 py-1 text-xs font-semibold rounded-full ${
+                    q.level === '直接理解' ? 'bg-green-100 text-green-800' :
+                    q.level === '推論理解' ? 'bg-yellow-100 text-yellow-800' :
+                    q.level === '詮釋整合' ? 'bg-orange-100 text-orange-800' :
+                    'bg-purple-100 text-purple-800'
+                }">${q.level}</span>` : '';
+
                 questionDiv.innerHTML = `
-                    <p class="font-bold text-lg mb-3">${index + 1}. ${q.question}</p>
-                    <div class="space-y-2">
+                    <div class="flex items-start justify-between mb-3">
+                        <p class="font-bold text-lg text-gray-800 flex-1">
+                            <span class="inline-block w-8 h-8 bg-green-500 text-white rounded-full text-center leading-8 mr-2">${index + 1}</span>
+                            ${q.question}
+                        </p>
+                        ${levelBadge}
+                    </div>
+                    <div class="space-y-2 ml-10">
                         ${q.options.map((opt, i) => {
                             const isChecked = selectedAnswer === (i + 1) ? 'checked' : '';
+                            const optionLabels = ['A', 'B', 'C', 'D'];
                             return `
-                            <label class="flex items-center p-2 hover:bg-gray-50 rounded cursor-pointer">
-                                <input type="radio" name="reading_q${index}" value="${i + 1}" class="mr-3" ${isChecked} data-question-index="${index}">
-                                <span>${i + 1}. ${opt}</span>
+                            <label class="flex items-center p-3 hover:bg-green-50 rounded-lg cursor-pointer transition-all duration-200 border-2 ${isChecked ? 'border-green-400 bg-green-50' : 'border-transparent'}">
+                                <input type="radio" name="reading_q${index}" value="${i + 1}" class="mr-3 w-4 h-4 text-green-600" ${isChecked} data-question-index="${index}">
+                                <span class="font-medium text-gray-700"><span class="font-bold text-green-600">${optionLabels[i]}.</span> ${opt}</span>
                             </label>
                         `}).join('')}
                     </div>
@@ -9460,8 +9689,560 @@ appId: &quot;...&quot;"></textarea>
                     const selectedValue = parseInt(e.target.value);
                     currentReadingAnswers[questionIndex] = selectedValue;
                     console.log('[Reading] Answer updated:', questionIndex, '=', selectedValue);
+
+                    // Update visual styles for selected option
+                    const allLabels = questionsContainer.querySelectorAll(`input[name="reading_q${questionIndex}"]`).forEach(input => {
+                        const label = input.closest('label');
+                        if (input.checked) {
+                            label.classList.add('border-green-400', 'bg-green-50');
+                            label.classList.remove('border-transparent');
+                        } else {
+                            label.classList.remove('border-green-400', 'bg-green-50');
+                            label.classList.add('border-transparent');
+                        }
+                    });
                 });
             });
+        }
+
+        /**
+         * Prevent pull-to-refresh on iOS/iPadOS devices
+         */
+        let pullToRefreshHandler = null;
+        let touchStartY = 0;
+
+        function enablePullToRefreshPrevention() {
+            // Remove existing handlers if any
+            if (pullToRefreshHandler) {
+                document.removeEventListener('touchstart', pullToRefreshHandler.start);
+                document.removeEventListener('touchmove', pullToRefreshHandler.move, { passive: false });
+            }
+
+            // Track touch start position
+            const handleTouchStart = function(e) {
+                touchStartY = e.touches[0].clientY;
+            };
+
+            // Prevent pull-to-refresh only when pulling down from non-scrollable area
+            const handleTouchMove = function(e) {
+                const readingContainer = document.getElementById('interaction-reading-comprehension');
+                if (!readingContainer || readingContainer.classList.contains('hidden')) {
+                    return;
+                }
+
+                const touchY = e.touches[0].clientY;
+                const touchDelta = touchY - touchStartY;
+
+                // Get the target element that was touched
+                const target = e.target;
+
+                // Find if the target is inside a scrollable container
+                let scrollableParent = null;
+                let element = target;
+
+                while (element && element !== readingContainer) {
+                    const overflowY = window.getComputedStyle(element).overflowY;
+                    if (overflowY === 'auto' || overflowY === 'scroll') {
+                        scrollableParent = element;
+                        break;
+                    }
+                    element = element.parentElement;
+                }
+
+                // If inside a scrollable container
+                if (scrollableParent) {
+                    const isAtTop = scrollableParent.scrollTop === 0;
+                    const isPullingDown = touchDelta > 0;
+
+                    // Only prevent if at the top AND pulling down
+                    if (isAtTop && isPullingDown) {
+                        e.preventDefault();
+                    }
+                } else {
+                    // Not in a scrollable container, prevent pull-to-refresh
+                    if (touchDelta > 0) {
+                        e.preventDefault();
+                    }
+                }
+            };
+
+            pullToRefreshHandler = {
+                start: handleTouchStart,
+                move: handleTouchMove
+            };
+
+            // Add event listeners
+            document.addEventListener('touchstart', pullToRefreshHandler.start, { passive: true });
+            document.addEventListener('touchmove', pullToRefreshHandler.move, { passive: false });
+            console.log('[Pull-to-Refresh] Prevention enabled');
+        }
+
+        function disablePullToRefreshPrevention() {
+            if (pullToRefreshHandler) {
+                document.removeEventListener('touchstart', pullToRefreshHandler.start);
+                document.removeEventListener('touchmove', pullToRefreshHandler.move, { passive: false });
+                pullToRefreshHandler = null;
+                console.log('[Pull-to-Refresh] Prevention disabled');
+            }
+        }
+
+        /**
+         * Initialize highlighter functionality for reading text - Drawing mode
+         */
+        let currentHighlighterColor = null;
+        let isEraserMode = false;
+        let highlightLines = []; // Store all highlight lines {color, points: [{x, y, lineY}]}
+        let highlightCanvas = null;
+        let highlightCtx = null;
+        let isHighlighting = false;
+        let currentHighlightPath = [];
+        let textLines = []; // Store text line positions
+
+        function initializeHighlighter() {
+            console.log('[Highlighter] Initializing drawing mode...');
+            const textDisplay = document.getElementById('reading-text-display');
+            highlightCanvas = document.getElementById('reading-highlight-canvas');
+
+            if (!textDisplay || !highlightCanvas) {
+                console.error('[Highlighter] Text display or canvas not found');
+                return;
+            }
+
+            highlightCtx = highlightCanvas.getContext('2d');
+
+            // Reset state
+            currentHighlighterColor = null;
+            isEraserMode = false;
+            highlightLines = [];
+            textLines = [];
+
+            // Setup canvas size
+            resizeCanvas();
+
+            // Setup highlighter buttons
+            const highlighterBtns = document.querySelectorAll('.highlighter-btn');
+            const eraserBtn = document.getElementById('reading-eraser-btn');
+
+            console.log('[Highlighter] Found buttons:', highlighterBtns.length, 'highlighters, eraser:', !!eraserBtn);
+
+            // Remove previous active states
+            highlighterBtns.forEach(btn => btn.classList.remove('active'));
+            if (eraserBtn) eraserBtn.classList.remove('active');
+
+            // Remove old event listeners by cloning buttons
+            highlighterBtns.forEach((btn, index) => {
+                const newBtn = btn.cloneNode(true);
+                btn.parentNode.replaceChild(newBtn, btn);
+            });
+
+            if (eraserBtn) {
+                const newEraserBtn = eraserBtn.cloneNode(true);
+                eraserBtn.parentNode.replaceChild(newEraserBtn, eraserBtn);
+            }
+
+            // Re-query buttons after cloning
+            const newHighlighterBtns = document.querySelectorAll('.highlighter-btn');
+            const newEraserBtn = document.getElementById('reading-eraser-btn');
+
+            // Highlighter button click handlers
+            newHighlighterBtns.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const color = btn.dataset.color;
+                    console.log('[Highlighter] Color button clicked:', color);
+
+                    currentHighlighterColor = color;
+                    isEraserMode = false;
+
+                    // Update button states
+                    newHighlighterBtns.forEach(b => b.classList.remove('active'));
+                    if (newEraserBtn) newEraserBtn.classList.remove('active');
+                    btn.classList.add('active');
+
+                    console.log('[Highlighter] Color activated:', color);
+                    highlightCanvas.style.pointerEvents = 'auto';
+                    highlightCanvas.style.cursor = 'crosshair';
+                });
+            });
+
+            // Eraser button click handler
+            if (newEraserBtn) {
+                newEraserBtn.addEventListener('click', () => {
+                    console.log('[Highlighter] Eraser button clicked');
+                    isEraserMode = true;
+                    currentHighlighterColor = null;
+
+                    // Update button states
+                    newHighlighterBtns.forEach(b => b.classList.remove('active'));
+                    newEraserBtn.classList.add('active');
+
+                    console.log('[Highlighter] Eraser mode activated');
+                    highlightCanvas.style.pointerEvents = 'auto';
+                    highlightCanvas.style.cursor = 'pointer';
+                });
+            }
+
+            // Detect text lines
+            detectTextLines();
+
+            // Setup drawing events
+            setupDrawingEvents();
+
+            console.log('[Highlighter] Initialization complete with drawing mode');
+        }
+
+        /**
+         * Resize canvas to match text display size
+         */
+        function resizeCanvas() {
+            const textDisplay = document.getElementById('reading-text-display');
+            if (!highlightCanvas || !textDisplay) return;
+
+            const rect = textDisplay.getBoundingClientRect();
+            highlightCanvas.width = rect.width;
+            highlightCanvas.height = rect.height;
+            highlightCanvas.style.width = rect.width + 'px';
+            highlightCanvas.style.height = rect.height + 'px';
+
+            console.log('[Highlighter] Canvas resized to:', highlightCanvas.width, 'x', highlightCanvas.height);
+
+            // Redraw all highlights after resize
+            drawHighlights();
+        }
+
+        /**
+         * Detect text line positions
+         */
+        function detectTextLines() {
+            const textDisplay = document.getElementById('reading-text-display');
+            if (!textDisplay) return;
+
+            textLines = [];
+            const range = document.createRange();
+            const textContent = textDisplay.textContent;
+
+            if (!textContent) return;
+
+            // Get all text nodes
+            const walker = document.createTreeWalker(
+                textDisplay,
+                NodeFilter.SHOW_TEXT,
+                null,
+                false
+            );
+
+            const textNodes = [];
+            while (walker.nextNode()) {
+                if (walker.currentNode.textContent.trim()) {
+                    textNodes.push(walker.currentNode);
+                }
+            }
+
+            // Get line rectangles
+            const lineMap = new Map();
+            textNodes.forEach(node => {
+                range.selectNodeContents(node);
+                const rects = range.getClientRects();
+                Array.from(rects).forEach(rect => {
+                    const y = Math.round(rect.top);
+                    if (!lineMap.has(y)) {
+                        lineMap.set(y, {
+                            top: rect.top,
+                            bottom: rect.bottom,
+                            left: Math.min(rect.left, lineMap.get(y)?.left || Infinity),
+                            right: Math.max(rect.right, lineMap.get(y)?.right || 0),
+                            height: rect.height
+                        });
+                    } else {
+                        const line = lineMap.get(y);
+                        line.left = Math.min(line.left, rect.left);
+                        line.right = Math.max(line.right, rect.right);
+                    }
+                });
+            });
+
+            const textDisplayRect = textDisplay.getBoundingClientRect();
+            lineMap.forEach((line, y) => {
+                textLines.push({
+                    y: line.top + line.height / 2 - textDisplayRect.top,
+                    top: line.top - textDisplayRect.top,
+                    bottom: line.bottom - textDisplayRect.top,
+                    left: line.left - textDisplayRect.left,
+                    right: line.right - textDisplayRect.left,
+                    height: line.height
+                });
+            });
+
+            textLines.sort((a, b) => a.y - b.y);
+            console.log('[Highlighter] Detected', textLines.length, 'text lines');
+        }
+
+        /**
+         * Setup drawing events for mouse and touch
+         */
+        function setupDrawingEvents() {
+            if (!highlightCanvas) return;
+
+            // Mouse events
+            highlightCanvas.addEventListener('mousedown', handleDrawStart);
+            highlightCanvas.addEventListener('mousemove', handleDrawMove);
+            highlightCanvas.addEventListener('mouseup', handleDrawEnd);
+            highlightCanvas.addEventListener('mouseleave', handleDrawEnd);
+
+            // Touch events
+            highlightCanvas.addEventListener('touchstart', handleDrawStart);
+            highlightCanvas.addEventListener('touchmove', handleDrawMove);
+            highlightCanvas.addEventListener('touchend', handleDrawEnd);
+            highlightCanvas.addEventListener('touchcancel', handleDrawEnd);
+        }
+
+        /**
+         * Get coordinates from mouse or touch event
+         */
+        function getEventCoords(e) {
+            const rect = highlightCanvas.getBoundingClientRect();
+            let clientX, clientY;
+
+            if (e.touches && e.touches.length > 0) {
+                clientX = e.touches[0].clientX;
+                clientY = e.touches[0].clientY;
+            } else {
+                clientX = e.clientX;
+                clientY = e.clientY;
+            }
+
+            return {
+                x: clientX - rect.left,
+                y: clientY - rect.top
+            };
+        }
+
+        /**
+         * Find nearest text line for a given y coordinate
+         */
+        function findNearestLine(y) {
+            if (textLines.length === 0) return null;
+
+            let nearest = textLines[0];
+            let minDist = Math.abs(y - textLines[0].y);
+
+            for (let i = 1; i < textLines.length; i++) {
+                const dist = Math.abs(y - textLines[i].y);
+                if (dist < minDist) {
+                    minDist = dist;
+                    nearest = textLines[i];
+                }
+            }
+
+            return nearest;
+        }
+
+        /**
+         * Start drawing
+         */
+        function handleDrawStart(e) {
+            e.preventDefault();
+
+            if (isEraserMode) {
+                handleEraseClick(e);
+                return;
+            }
+
+            if (!currentHighlighterColor) return;
+
+            isHighlighting = true;
+            currentHighlightPath = [];
+
+            const coords = getEventCoords(e);
+            currentHighlightPath.push(coords);
+
+            console.log('[Highlighter] Drawing started at:', coords);
+        }
+
+        /**
+         * Drawing move
+         */
+        function handleDrawMove(e) {
+            if (!isHighlighting || !currentHighlighterColor) return;
+
+            e.preventDefault();
+
+            const coords = getEventCoords(e);
+            currentHighlightPath.push(coords);
+
+            // Draw preview
+            drawPreview();
+        }
+
+        /**
+         * End drawing
+         */
+        function handleDrawEnd(e) {
+            if (!isHighlighting) return;
+
+            e.preventDefault();
+            isHighlighting = false;
+
+            if (currentHighlightPath.length < 2) {
+                currentHighlightPath = [];
+                return;
+            }
+
+            // Process path to align to text lines
+            const alignedPath = alignPathToLines(currentHighlightPath);
+
+            if (alignedPath.length > 0) {
+                highlightLines.push({
+                    color: currentHighlighterColor,
+                    points: alignedPath,
+                    id: Date.now() + Math.random()
+                });
+            }
+
+            currentHighlightPath = [];
+            drawHighlights();
+
+            console.log('[Highlighter] Drawing complete, total lines:', highlightLines.length);
+        }
+
+        /**
+         * Draw preview while drawing
+         */
+        function drawPreview() {
+            if (!highlightCtx || currentHighlightPath.length < 2) return;
+
+            drawHighlights(); // Redraw existing highlights
+
+            // Draw current path preview
+            const colorMap = {
+                yellow: 'rgba(254, 240, 138, 0.6)',
+                green: 'rgba(134, 239, 172, 0.6)',
+                pink: 'rgba(253, 164, 175, 0.6)',
+                blue: 'rgba(147, 197, 253, 0.6)'
+            };
+
+            highlightCtx.strokeStyle = colorMap[currentHighlighterColor] || 'rgba(254, 240, 138, 0.6)';
+            highlightCtx.lineWidth = 20;
+            highlightCtx.lineCap = 'round';
+            highlightCtx.lineJoin = 'round';
+
+            highlightCtx.beginPath();
+            highlightCtx.moveTo(currentHighlightPath[0].x, currentHighlightPath[0].y);
+            for (let i = 1; i < currentHighlightPath.length; i++) {
+                highlightCtx.lineTo(currentHighlightPath[i].x, currentHighlightPath[i].y);
+            }
+            highlightCtx.stroke();
+        }
+
+        /**
+         * Align path to text lines
+         */
+        function alignPathToLines(path) {
+            if (path.length === 0 || textLines.length === 0) return [];
+
+            const aligned = [];
+            const lineHeight = 20; // Height of highlight line
+
+            // Group path points by nearest line
+            const lineGroups = new Map();
+
+            path.forEach(point => {
+                const nearestLine = findNearestLine(point.y);
+                if (nearestLine) {
+                    const lineKey = nearestLine.y;
+                    if (!lineGroups.has(lineKey)) {
+                        lineGroups.set(lineKey, {
+                            line: nearestLine,
+                            points: []
+                        });
+                    }
+                    lineGroups.get(lineKey).points.push(point);
+                }
+            });
+
+            // Create aligned segments for each line
+            lineGroups.forEach((group, lineKey) => {
+                if (group.points.length > 0) {
+                    const minX = Math.min(...group.points.map(p => p.x));
+                    const maxX = Math.max(...group.points.map(p => p.x));
+                    const y = group.line.y;
+
+                    aligned.push({
+                        x1: minX,
+                        x2: maxX,
+                        y: y,
+                        lineY: group.line.y
+                    });
+                }
+            });
+
+            return aligned;
+        }
+
+        /**
+         * Draw all highlights on canvas
+         */
+        function drawHighlights() {
+            if (!highlightCtx || !highlightCanvas) return;
+
+            // Clear canvas
+            highlightCtx.clearRect(0, 0, highlightCanvas.width, highlightCanvas.height);
+
+            const colorMap = {
+                yellow: 'rgba(254, 240, 138, 0.6)',
+                green: 'rgba(134, 239, 172, 0.6)',
+                pink: 'rgba(253, 164, 175, 0.6)',
+                blue: 'rgba(147, 197, 253, 0.6)'
+            };
+
+            const lineHeight = 20;
+
+            // Draw all highlight lines
+            highlightLines.forEach(line => {
+                highlightCtx.strokeStyle = colorMap[line.color] || 'rgba(254, 240, 138, 0.6)';
+                highlightCtx.lineWidth = lineHeight;
+                highlightCtx.lineCap = 'round';
+
+                line.points.forEach(segment => {
+                    highlightCtx.beginPath();
+                    highlightCtx.moveTo(segment.x1, segment.y);
+                    highlightCtx.lineTo(segment.x2, segment.y);
+                    highlightCtx.stroke();
+                });
+            });
+        }
+
+        /**
+         * Handle eraser click
+         */
+        function handleEraseClick(e) {
+            if (!isEraserMode) return;
+
+            const coords = getEventCoords(e);
+            console.log('[Highlighter] Erase click at:', coords);
+
+            // Find which highlight line was clicked
+            const clickRadius = 15;
+            let foundIndex = -1;
+
+            for (let i = highlightLines.length - 1; i >= 0; i--) {
+                const line = highlightLines[i];
+                for (const segment of line.points) {
+                    // Check if click is within the segment bounds
+                    if (coords.x >= segment.x1 - clickRadius &&
+                        coords.x <= segment.x2 + clickRadius &&
+                        Math.abs(coords.y - segment.y) <= clickRadius) {
+                        foundIndex = i;
+                        break;
+                    }
+                }
+                if (foundIndex >= 0) break;
+            }
+
+            if (foundIndex >= 0) {
+                highlightLines.splice(foundIndex, 1);
+                drawHighlights();
+                console.log('[Highlighter] Highlight line removed, remaining:', highlightLines.length);
+            }
         }
 
         /**
